@@ -1,0 +1,39 @@
+services:
+
+  # ── Backend: ASP.NET Core 8 API ─────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/products.db
+    volumes:
+      # Persistir o banco de dados SQLite entre reinicializações do contêiner
+      - sqlite_data:/app/data
+    ports:
+      # Expor a API diretamente (útil para acesso ao Swagger durante o desenvolvimento)
+      - "5241:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/products?page=1&pageSize=1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Frontend: React SPA servido pelo nginx ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  # Volume nomeado mantém o products.db vivo entre ciclos de `docker compose down`
+  sqlite_data:

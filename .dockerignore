@@ -1,0 +1,10 @@
+bin/
+obj/
+frontend/
+*.db
+*.db-shm
+*.db-wal
+logs/
+.git/
+.gitignore
+README.md
